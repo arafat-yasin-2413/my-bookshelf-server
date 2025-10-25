@@ -56,8 +56,8 @@ const verifyTokenEmail = (req, res, next) => {
 async function run() {
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
-		await client.connect();
-		console.log("Database connected----------");
+		// await client.connect();
+		// console.log("Database connected----------");
 
 		const booksCollection = client.db("bookshelfDB").collection("books");
 		const usersCollection = client.db("bookshelfDB").collection("users");
@@ -68,13 +68,41 @@ async function run() {
 			.db("bookshelfDB")
 			.collection("wishlist");
 
+		///////////////////// APIs ///////////////////
+		// get my wishlist api
+		app.get("/myWishlist", async (req, res) => {
+			try {
+				const userEmail = req.query.userEmail;
+
+				if (!userEmail) {
+					return res
+						.status(400)
+						.send({ message: "userEmail is required" });
+				}
+
+				const userWishlist = await wishlistCollection
+					.find({ userEmail })
+					.toArray();
+				res.send(userWishlist);
+			} catch (error) {
+				console.log(error);
+				res.status(500).send({ message: "Internal Server Error" });
+			}
+		});
+
 		// add to wishlist api
 		app.post("/wishlist", async (req, res) => {
 			console.log("📩 Received POST request on /wishlist");
 			console.log("Request body:", req.body);
-            
+
 			try {
-				const { bookId, userEmail } = req.body;
+				const {
+					bookId,
+					bookName,
+					bookAuthor,
+					bookCategory,
+					userEmail,
+				} = req.body;
 				console.log(bookId);
 
 				if (!bookId || !userEmail) {
@@ -98,6 +126,9 @@ async function run() {
 
 				const wishlistItem = {
 					bookId: new ObjectId(bookId),
+					bookName,
+					bookAuthor,
+					bookCategory,
 					userEmail,
 					addedAt: new Date(Date.now()),
 				};
@@ -114,7 +145,23 @@ async function run() {
 			}
 		});
 
-		///////////////////// APIs ///////////////////
+		// delete from wishlist api
+		app.delete("/myWishlist/:id", async (req, res) => {
+			const id = req.params.id;
+
+			try {
+				const result = await wishlistCollection.deleteOne({
+					_id: new ObjectId(id),
+				});
+				res.send(result);
+			} catch (error) {
+				console.log(error);
+				res.status(500).send({
+					message: "Error deleting book from wishlist",
+				});
+			}
+		});
+
 		// book related APIs
 		app.get("/bookshelf", async (req, res) => {
 			const result = await booksCollection.find().toArray();
@@ -390,9 +437,9 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-	res.send("Bookshelf server is cooking...");
+	res.send("Bookshelf server is cooking perfectly...");
 });
 
 app.listen(port, () => {
-	console.log(`Bookshelf server is running hot on port ${port}`);
+	console.log(`Bookshelf server is running hot on port ${port} properly`);
 });
