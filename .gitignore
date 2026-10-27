@@ -2,3 +2,13 @@ node_modules
 firebase-admin-service-key.json
 .vercel
 config.bat
+
+# Environment variables & secrets (added by GitHub Guardian)
+.env
+.env.*
+*.env
+!.env.example
+!.env.sample
+.envrc
+.venv/
+venv/
